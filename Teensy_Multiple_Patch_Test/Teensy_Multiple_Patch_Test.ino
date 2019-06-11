@@ -24,7 +24,6 @@ AudioConnection          patchCord5(masterMixer, dac1);
 char bytes[9];
 
 void setup() {
-
   Serial.begin(9600);
   HWSERIAL.begin(115200);
   Serial.print("hello");
@@ -35,64 +34,83 @@ void setup() {
   noise1.amplitude(0.5);
 }
 
+void printReadings(byte light, byte x, byte y, byte z, byte sound, byte left, byte right, byte slide, byte patch) {
+  Serial.print("LIGHT: ");
+  Serial.print(light, DEC);
+  Serial.print("X: ");
+  Serial.print(x, DEC);
+  Serial.print("Y: ");
+  Serial.print(y, DEC);
+  Serial.print("Z: ");
+  Serial.print(z, DEC);
+  Serial.print("SOUND: ");
+  Serial.print(sound, DEC);
+  Serial.print("LEFT: ");
+  Serial.print(left, DEC);
+  Serial.print("RIGHT: ");
+  Serial.print(right, DEC);
+  Serial.print("SLIDE: ");
+  Serial.print(slide, DEC);
+  Serial.print("PATCH: ");
+  Serial.println(patch, DEC);
+}
+
 void loop() {
   if (HWSERIAL.available()) {
     if (HWSERIAL.read() == 0xff) {
       HWSERIAL.readBytes(bytes, 9);
 
-      byte lightReading = byte(bytes[0]);
-      byte xReading = byte(bytes[1]);
-      byte yReading = byte(bytes[2]);
-      byte zReading = byte(bytes[3]);
-      byte soundReading = byte(bytes[4]);
-      byte leftButton = byte(bytes[5]);
-      byte rightButton = byte(bytes[6]);
-      byte slideSwitch = byte(bytes[7]);
-      byte patchNum = byte(bytes[8]);
+      byte light = byte(bytes[0]);
+      byte x = byte(bytes[1]);
+      byte y = byte(bytes[2]);
+      byte z = byte(bytes[3]);
+      byte sound = byte(bytes[4]);
+      byte left = byte(bytes[5]);
+      byte right = byte(bytes[6]);
+      byte slide = byte(bytes[7]);
+      byte patch = byte(bytes[8]);
 
-      //not sure if we still need the DEC after the named sensor readings....
-      Serial.print("UART received: ");
-      Serial.print(lightReading, DEC);
-      Serial.print(", ");
-      Serial.print(xReading, DEC);
-      Serial.print(", ");
-      Serial.print(yReading, DEC);
-      Serial.print(", ");
-      Serial.print(zReading, DEC);
-      Serial.print(", ");
-      Serial.print(soundReading, DEC);
-      Serial.print(", ");
-      Serial.print(leftButton, DEC);
-      Serial.print(", ");
-      Serial.print(rightButton, DEC);
-      Serial.print(", ");
-      Serial.print(slideSwitch, DEC);
-      Serial.print(", ");
-      Serial.println(patchNum, DEC);
+      printReadings(light, x, y, z, sound, left right, slide, patch);
 
-      // insert audio stuff here
-      int lightReadingScaled;
-      lightReadingScaled = map(lightReading, 0, 255, 200, 250);
-      waveform1.frequency(lightReadingScaled); // scale so it can go above or below base frew
-      waveform1.amplitude(0.5);
-      noise1.amplitude(0.5);
-
-      if (patchNum == 1) {
-        mixer1234.gain(0, 1);
-        mixer1234.gain(1, 0);
-      };
-
-      if (patchNum == 2) {
-        mixer1234.gain(1, 1);
-        mixer1234.gain(0, 0);
-      };
-
-      if (patchNum >= 3) {
-        mixer1234.gain(1, 0);
-        mixer1234.gain(0, 0);
-      };
-
-      // could start with 1, pass it, bring more in
+      switch (patch) {
+        case 1:
+          patchOne(light);
+        case 2:
+          patchTwo();
+        case 3:
+          patchThree();
+        case 4:
+          patchFour();
+        case 5:
+          patchFive();
+        default:
+          //
+      }
     }
   }
+}
+
+void patchOne(byte light) {
+  int lightScaled;
+  lightScaled = map(lightReading, 0, 255, 200, 250);
+  waveform1.frequency(lightReadingScaled); // scale so it can go above or below base frew
+  waveform1.amplitude(0.5);
+  noise1.amplitude(0.5);
+}
+
+void patchTwo() {
+
+}
+
+void patchThree() {
+
+}
+
+void patchFour() {
+
+}
+
+void patchFive() {
+
+}
 }
