@@ -1,4 +1,5 @@
 #define HWSERIAL Serial1
+#define FILTER_SIZE 100
 
 #include <Audio.h>
 #include <Wire.h>
@@ -34,31 +35,51 @@ void setup() {
   noise1.amplitude(0.5);
 }
 
-void printReadings(byte light, byte x, byte y, byte z, byte sound, byte left, byte right, byte slide, byte patch) {
-  Serial.print("LIGHT: ");
+void printReadings(byte light, byte x, byte y, byte z, byte sound, byte left, byte right, byte slide, byte temp, byte patch) {
+  Serial.print("\tLIGHT: ");
   Serial.print(light, DEC);
-  Serial.print("X: ");
+  Serial.print("\tX: ");
   Serial.print(x, DEC);
-  Serial.print("Y: ");
+  Serial.print("\tY: ");
   Serial.print(y, DEC);
-  Serial.print("Z: ");
+  Serial.print("\tZ: ");
   Serial.print(z, DEC);
-  Serial.print("SOUND: ");
+  Serial.print("\tSOUND: ");
   Serial.print(sound, DEC);
-  Serial.print("LEFT: ");
+  Serial.print("\tLEFT: ");
   Serial.print(left, DEC);
-  Serial.print("RIGHT: ");
+  Serial.print("\tRIGHT: ");
   Serial.print(right, DEC);
-  Serial.print("SLIDE: ");
+  Serial.print("\tSLIDE: ");
   Serial.print(slide, DEC);
-  Serial.print("PATCH: ");
+  Serial.print("\tTEMP: ");
+  Serial.print(temp, DEC);
+  Serial.print("\tPATCH: ");
   Serial.println(patch, DEC);
+}
+
+int xReadings[FILTER_SIZE];
+int yReadings[FILTER_SIZE];
+int zReadings[FILTER_SIZE];
+
+float averageReadings(byte val, int readings[]) {
+  for (int i = FILTER_SIZE - 1; i > 0; i--) {
+    readings[i] = readings[i - 1];
+  }
+  readings[0] = val;
+
+  float sum = 0.0;
+  for (int i = 0; i < FILTER_SIZE; i++) {
+    sum += readings[i];
+  }
+
+  return sum / FILTER_SIZE;
 }
 
 void loop() {
   if (HWSERIAL.available()) {
     if (HWSERIAL.read() == 0xff) {
-      HWSERIAL.readBytes(bytes, 9);
+      HWSERIAL.readBytes(bytes, 10);
 
       byte light = byte(bytes[0]);
       byte x = byte(bytes[1]);
@@ -68,38 +89,54 @@ void loop() {
       byte left = byte(bytes[5]);
       byte right = byte(bytes[6]);
       byte slide = byte(bytes[7]);
-      byte patch = byte(bytes[8]);
+      byte temp = byte(bytes[8]);
+      byte patch = byte(bytes[9]);
 
-      printReadings(light, x, y, z, sound, left right, slide, patch);
+      float xMean = averageReadings(x, xReadings);
+      float yMean = averageReadings(y, yReadings);
+      float zMean = averageReadings(z, zReadings);
+
+      // printReadings(light, x, y, z, sound, left, right, slide, temp, patch);
+      Serial.print(xMean, DEC);
+      Serial.print(", ");
+      Serial.print(yMean, DEC);
+      Serial.print(", ");
+      Serial.println(zMean, DEC);
+
 
       switch (patch) {
         case 1:
           patchOne(light);
+          break;
         case 2:
           patchTwo();
+          break;
         case 3:
           patchThree();
+          break;
         case 4:
           patchFour();
+          break;
         case 5:
           patchFive();
+          break;
         default:
-          //
+          break;
       }
     }
   }
 }
 
 void patchOne(byte light) {
-  int lightScaled;
-  lightScaled = map(lightReading, 0, 255, 200, 250);
-  waveform1.frequency(lightReadingScaled); // scale so it can go above or below base frew
+  int lightScaled = map(light, 0, 255, 200, 250);
+  waveform1.frequency(lightScaled); // scale so it can go above or below base frew
   waveform1.amplitude(0.5);
   noise1.amplitude(0.5);
 }
 
 void patchTwo() {
-
+  waveform1.amplitude(0.5);
+  noise1.amplitude(0.0);
 }
 
 void patchThree() {
@@ -112,5 +149,4 @@ void patchFour() {
 
 void patchFive() {
 
-}
 }
